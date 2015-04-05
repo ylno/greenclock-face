@@ -1,10 +1,10 @@
-# ks-clock-face
+# greenclock-face
 
-Animated color Pebble watchface from the Pebble Time Kickstarter video. Expands
-from a dot, sweeping the clock arms as it does so.
+Based on the example ks-clock-face.
 
-![](screenshots/screenshot-bw.png)
+Animated color Pebble watchface. Expands from a dot, sweeping the clock arms as it does so. 
+There are two inner circles inside the clock face. One is filling up the clock face every hour, one for the whole day.
 
-Change `COLOR` to `true` and re-compile for a splash of color.
+![](screenshots/screenshot.png)
 
-![](screenshots/screenshot-color.png)
+
