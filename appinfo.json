@@ -1,8 +1,8 @@
 {
-  "uuid": "25becbb7-c0bc-4180-82b6-b36f1bf894c7",
-  "shortName": "ks-clock-face",
-  "longName": "ks-clock-face",
-  "companyName": "Chris Lewis",
+  "uuid": "bf03aef3-04e3-4da7-9b9a-132ffb4ead46",
+  "shortName": "greenclock-face",
+  "longName": "greenclock-face",
+  "companyName": "ylno",
   "versionCode": 1,
   "versionLabel": "1.0",
   "sdkVersion": "3",

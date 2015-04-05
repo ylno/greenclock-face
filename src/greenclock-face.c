@@ -4,7 +4,10 @@
 #define ANTIALIASING true
 
 #define HAND_MARGIN  10
-#define FINAL_RADIUS 55
+#define HAND_MARGIN_HOUR  25
+#define FINAL_RADIUS 70
+
+#define TICK_LENGTH  10
 
 #define ANIMATION_DURATION 500
 #define ANIMATION_DELAY    600
@@ -20,7 +23,10 @@ static Layer *s_canvas_layer;
 static GPoint s_center;
 static Time s_last_time, s_anim_time;
 static int s_radius = 0, s_anim_hours_60 = 0, s_color_channels[3];
-static bool s_animating = false;
+static bool s_animating = true;
+
+static TextLayer *s_time_layer;
+
 
 /*************************** AnimationImplementation **************************/
 
@@ -30,6 +36,11 @@ static void animation_started(Animation *anim, void *context) {
 
 static void animation_stopped(Animation *anim, bool stopped, void *context) {
   s_animating = false;
+
+  // repaint after animation to show the other stuff
+  if(s_canvas_layer) {
+    layer_mark_dirty(s_canvas_layer);
+  }
 }
 
 static void animate(int duration, int delay, AnimationImplementation *implementation, bool handlers) {
@@ -71,13 +82,18 @@ static int hours_to_minutes(int hours_out_of_12) {
 
 static void update_proc(Layer *layer, GContext *ctx) {
   // Color background?
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
   if(COLORS) {
-    graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
+    //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
+    graphics_context_set_fill_color(ctx, GColorPastelYellow);
     graphics_fill_rect(ctx, GRect(0, 0, 144, 168), 0, GCornerNone);
   }
 
+  time_t temp = time(NULL); 
+  struct tm *tick_time = localtime(&temp);
+
   graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_context_set_stroke_width(ctx, 4);
+  graphics_context_set_stroke_width(ctx, 2);
 
   graphics_context_set_antialiased(ctx, ANTIALIASING);
 
@@ -90,6 +106,58 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
   // Don't use current time while animating
   Time mode_time = (s_animating) ? s_anim_time : s_last_time;
+
+  if(!s_animating) {
+    // Draw day ring
+     graphics_context_set_stroke_width(ctx, 1);
+    
+    int minute_ring_radius = (int32_t)((double)(s_radius-4)  / 60 * (tick_time->tm_min + 1));
+    int hour_ring_radius = (int32_t)((double)(s_radius-4)  / 24 * (tick_time->tm_hour + 1));
+
+    if(minute_ring_radius > hour_ring_radius) {
+      // minute ring then day ring
+      graphics_context_set_fill_color(ctx, GColorMintGreen);
+      graphics_fill_circle(ctx, s_center, minute_ring_radius);  
+      graphics_context_set_fill_color(ctx, GColorMalachite);
+      graphics_fill_circle(ctx, s_center, hour_ring_radius);
+    } else {
+      // hour ring, then day ring
+      graphics_context_set_fill_color(ctx, GColorMalachite);
+      graphics_fill_circle(ctx, s_center, hour_ring_radius);
+      graphics_context_set_fill_color(ctx, GColorMintGreen);
+      graphics_fill_circle(ctx, s_center, minute_ring_radius);  
+    }
+
+
+
+    // Draw ticks
+    graphics_context_set_stroke_color(ctx, GColorChromeYellow);
+    for(int i=0; i<12; i++) {
+      
+      float tick_angle = TRIG_MAX_ANGLE * i / 12;
+      GPoint tick_start = (GPoint) {
+        .x = (int16_t)(sin_lookup(tick_angle) * (int32_t)(s_radius - (TICK_LENGTH)) / TRIG_MAX_RATIO) + s_center.x,
+        .y = (int16_t)(-cos_lookup(tick_angle) * (int32_t)(s_radius - (TICK_LENGTH)) / TRIG_MAX_RATIO) + s_center.y,
+      };
+      GPoint tick_stop = (GPoint) {
+        .x = (int16_t)(sin_lookup(tick_angle) * (int32_t)(s_radius - (4)) / TRIG_MAX_RATIO) + s_center.x,
+        .y = (int16_t)(-cos_lookup(tick_angle) * (int32_t)(s_radius - (4)) / TRIG_MAX_RATIO) + s_center.y,
+      };
+      
+      if(i==0 || i==3 || i==6 || i==9) {
+        graphics_context_set_stroke_width(ctx, 4);
+      } else {
+        graphics_context_set_stroke_width(ctx, 1);
+      }
+
+      
+      graphics_draw_line(ctx, tick_start, tick_stop);
+    }
+  }
+  graphics_context_set_stroke_color(ctx, GColorIslamicGreen);
+  graphics_context_set_stroke_width(ctx, 4);
+
+  
 
   // Adjust for minutes through the hour
   float minute_angle = TRIG_MAX_ANGLE * mode_time.minutes / 60;
@@ -108,18 +176,46 @@ static void update_proc(Layer *layer, GContext *ctx) {
     .y = (int16_t)(-cos_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.y,
   };
   GPoint hour_hand = (GPoint) {
-    .x = (int16_t)(sin_lookup(hour_angle) * (int32_t)(s_radius - (2 * HAND_MARGIN)) / TRIG_MAX_RATIO) + s_center.x,
-    .y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)(s_radius - (2 * HAND_MARGIN)) / TRIG_MAX_RATIO) + s_center.y,
+    .x = (int16_t)(sin_lookup(hour_angle) * (int32_t)(s_radius - (HAND_MARGIN_HOUR)) / TRIG_MAX_RATIO) + s_center.x,
+    .y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)(s_radius - (HAND_MARGIN_HOUR)) / TRIG_MAX_RATIO) + s_center.y,
   };
 
+  
   // Draw hands with positive length only
   if(s_radius > 2 * HAND_MARGIN) {
+    graphics_context_set_stroke_width(ctx, 4);
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_draw_line(ctx, s_center, hour_hand);
+    graphics_context_set_stroke_width(ctx, 2);
+    graphics_context_set_stroke_color(ctx, GColorDarkGreen);
     graphics_draw_line(ctx, s_center, hour_hand);
   } 
+
   if(s_radius > HAND_MARGIN) {
+    graphics_context_set_stroke_width(ctx, 3);
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_draw_line(ctx, s_center, minute_hand);
+    graphics_context_set_stroke_width(ctx, 1);
+    graphics_context_set_stroke_color(ctx, GColorDarkGreen);
     graphics_draw_line(ctx, s_center, minute_hand);
   }
+
+  graphics_context_set_stroke_width(ctx, 1);
+  //graphics_draw_rect(ctx, GRect(32, 103, 30, 25));
+  graphics_context_set_text_color(ctx, GColorArmyGreen);
+  
+  if(!s_animating) {
+    static char buffer[] = "00:00";
+    
+    strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(59, 110,  30, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    strftime(buffer, sizeof("000, 01.01.20"), "%a, %d.%m.%y", tick_time);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(40, 42,  70, 10), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  }
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "finished");
 }
+
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
