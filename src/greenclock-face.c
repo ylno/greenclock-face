@@ -12,6 +12,10 @@
 #define ANIMATION_DURATION 500
 #define ANIMATION_DELAY    600
 
+// XY startpoints where battery is drawn
+#define BAT_START_X  112
+#define BAT_START_Y  2
+
 typedef struct {
   int hours;
   int minutes;
@@ -25,7 +29,9 @@ static Time s_last_time, s_anim_time;
 static int s_radius = 0, s_anim_hours_60 = 0, s_color_channels[3];
 static bool s_animating = true;
 
-static TextLayer *s_time_layer;
+
+static BatteryChargeState batteryState;
+static Layer *mydrawings_layer;
 
 
 /*************************** AnimationImplementation **************************/
@@ -82,7 +88,7 @@ static int hours_to_minutes(int hours_out_of_12) {
 
 static void update_proc(Layer *layer, GContext *ctx) {
   // Color background?
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
+  //APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
   if(COLORS) {
     //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
     graphics_context_set_fill_color(ctx, GColorPastelYellow);
@@ -213,7 +219,37 @@ static void update_proc(Layer *layer, GContext *ctx) {
     graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(40, 42,  70, 10), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "finished");
+  //APP_LOG(APP_LOG_LEVEL_DEBUG, "finished");
+}
+
+static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
+    //---draw 2 rectangles to represent the battery---
+
+    //graphics_context_set_stroke_color(ctx, GColorMalachite);
+    graphics_context_set_stroke_color(ctx, GColorDarkGreen);
+    graphics_context_set_fill_color(ctx, GColorMintGreen);
+
+    GRect rect1;
+    rect1.origin = GPoint(BAT_START_X, BAT_START_Y);
+    rect1.size = GSize(27,10);
+    graphics_draw_rect(ctx, rect1);
+    
+    GRect rect2;
+    rect2.origin = GPoint(BAT_START_X+27, BAT_START_Y+3);
+    rect2.size = GSize(2,5);
+    graphics_draw_rect(ctx, rect2);
+    
+    GRect rect3;
+    rect3.origin = GPoint(BAT_START_X+1,BAT_START_Y+1);
+      
+    //---change the width of the rect to match the battery level---
+    rect3.size = GSize(batteryState.charge_percent/4, 8);
+    //---end of statements to add---
+      
+    graphics_fill_rect(ctx, rect3, 0, GCornerNone);
+
+    //APP_LOG(APP_LOG_LEVEL_DEBUG, "battery %i", batteryState.charge_percent);
+
 }
 
 
@@ -226,6 +262,12 @@ static void window_load(Window *window) {
   s_canvas_layer = layer_create(window_bounds);
   layer_set_update_proc(s_canvas_layer, update_proc);
   layer_add_child(window_layer, s_canvas_layer);
+
+  batteryState = battery_state_service_peek();
+  mydrawings_layer = layer_create(window_bounds);
+    layer_set_update_proc(mydrawings_layer,
+    my_layer_update_proc);
+  layer_add_child(window_layer, mydrawings_layer);
 }
 
 static void window_unload(Window *window) {
@@ -251,6 +293,13 @@ static void hands_update(Animation *anim, uint32_t dist_normalized) {
   layer_mark_dirty(s_canvas_layer);
 }
 
+static void battery_state_handler(
+  BatteryChargeState charge) {
+  //---mark the drawing layer as dirty so as to force
+  // a redraw---
+  layer_mark_dirty(mydrawings_layer);
+}
+
 static void init() {
   srand(time(NULL));
 
@@ -263,6 +312,7 @@ static void init() {
     .load = window_load,
     .unload = window_unload,
   });
+  
   window_stack_push(s_main_window, true);
 
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
@@ -277,6 +327,10 @@ static void init() {
     .update = hands_update
   };
   animate(2 * ANIMATION_DURATION, ANIMATION_DELAY, &hands_impl, true);
+
+  battery_state_service_subscribe(
+    battery_state_handler);
+
 }
 
 static void deinit() {
