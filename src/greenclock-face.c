@@ -26,7 +26,7 @@ static Layer *s_canvas_layer;
 
 static GPoint s_center;
 static Time s_last_time, s_anim_time;
-static int s_radius = 0, s_anim_hours_60 = 0, s_color_channels[3];
+static int s_radius = 0, s_color_channels[3];
 static bool s_animating = true;
 
 
@@ -161,10 +161,8 @@ static void update_proc(Layer *layer, GContext *ctx) {
     }
   }
   graphics_context_set_stroke_color(ctx, GColorIslamicGreen);
-  graphics_context_set_stroke_width(ctx, 4);
-
+  graphics_context_set_stroke_width(ctx, 1);
   
-
   // Adjust for minutes through the hour
   float minute_angle = TRIG_MAX_ANGLE * mode_time.minutes / 60;
   float hour_angle;
@@ -207,16 +205,18 @@ static void update_proc(Layer *layer, GContext *ctx) {
   }
 
   graphics_context_set_stroke_width(ctx, 1);
-  //graphics_draw_rect(ctx, GRect(32, 103, 30, 25));
-  graphics_context_set_text_color(ctx, GColorArmyGreen);
   
   if(!s_animating) {
     static char buffer[] = "00:00";
     
+    graphics_context_set_text_color(ctx, GColorIslamicGreen);
     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(59, 110,  30, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(115, 150,  90, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+
+ 
     strftime(buffer, sizeof("000, 01.01.20"), "%a, %d.%m.%y", tick_time);
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(40, 42,  70, 10), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(0, -2,  70, 8), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "finished");
@@ -272,6 +272,7 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   layer_destroy(s_canvas_layer);
+  layer_destroy(mydrawings_layer);
 }
 
 /*********************************** App **************************************/
@@ -293,8 +294,7 @@ static void hands_update(Animation *anim, uint32_t dist_normalized) {
   layer_mark_dirty(s_canvas_layer);
 }
 
-static void battery_state_handler(
-  BatteryChargeState charge) {
+static void battery_state_handler(BatteryChargeState charge) {
   //---mark the drawing layer as dirty so as to force
   // a redraw---
   layer_mark_dirty(mydrawings_layer);
@@ -334,7 +334,14 @@ static void init() {
 }
 
 static void deinit() {
+  tick_timer_service_unsubscribe();
+   
+  //---add in the following statements---
+          //---unsubscribe from the battery charge state event
+  // serice---
+  battery_state_service_unsubscribe();
   window_destroy(s_main_window);
+  
 }
 
 int main() {
