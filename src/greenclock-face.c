@@ -88,7 +88,7 @@ static int hours_to_minutes(int hours_out_of_12) {
 
 static void update_proc(Layer *layer, GContext *ctx) {
   // Color background?
-  //APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
   if(COLORS) {
     //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
     graphics_context_set_fill_color(ctx, GColorPastelYellow);
@@ -223,6 +223,8 @@ static void update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "battery update");
     //---draw 2 rectangles to represent the battery---
 
     //graphics_context_set_stroke_color(ctx, GColorMalachite);
@@ -248,7 +250,7 @@ static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
       
     graphics_fill_rect(ctx, rect3, 0, GCornerNone);
 
-    //APP_LOG(APP_LOG_LEVEL_DEBUG, "battery %i", batteryState.charge_percent);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "battery %i", batteryState.charge_percent);
 
 }
 
@@ -273,6 +275,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   layer_destroy(s_canvas_layer);
   layer_destroy(mydrawings_layer);
+  battery_state_service_unsubscribe();
 }
 
 /*********************************** App **************************************/
@@ -297,6 +300,7 @@ static void hands_update(Animation *anim, AnimationProgress dist_normalized) {
 static void battery_state_handler(BatteryChargeState charge) {
   //---mark the drawing layer as dirty so as to force
   // a redraw---
+  batteryState = charge;
   layer_mark_dirty(mydrawings_layer);
 }
 
@@ -328,8 +332,7 @@ static void init() {
   };
   animate(2 * ANIMATION_DURATION, ANIMATION_DELAY, &hands_impl, true);
 
-  battery_state_service_subscribe(
-    battery_state_handler);
+  battery_state_service_subscribe(battery_state_handler);
 
 }
 
