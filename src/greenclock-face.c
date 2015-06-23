@@ -16,6 +16,8 @@
 #define BAT_START_X  112
 #define BAT_START_Y  2
 
+//#define DEBUG false
+
 typedef struct {
   int hours;
   int minutes;
@@ -88,7 +90,9 @@ static int hours_to_minutes(int hours_out_of_12) {
 
 static void update_proc(Layer *layer, GContext *ctx) {
   // Color background?
+  #ifdef DEBUG
   APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
+  #endif
   if(COLORS) {
     //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
     graphics_context_set_fill_color(ctx, GColorBlack);
@@ -226,7 +230,9 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
 static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
 
+    #ifdef DEBUG
     APP_LOG(APP_LOG_LEVEL_DEBUG, "battery update");
+    #endif
     //---draw 2 rectangles to represent the battery---
 
     //graphics_context_set_stroke_color(ctx, GColorMalachite);
@@ -252,7 +258,9 @@ static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
       
     graphics_fill_rect(ctx, rect3, 0, GCornerNone);
 
+    #ifdef DEBUG
     APP_LOG(APP_LOG_LEVEL_DEBUG, "battery %i", batteryState.charge_percent);
+    #endif
 
 }
 
