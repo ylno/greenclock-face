@@ -91,7 +91,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "start drawing");
   if(COLORS) {
     //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
-    graphics_context_set_fill_color(ctx, GColorPastelYellow);
+    graphics_context_set_fill_color(ctx, GColorBlack);
     graphics_fill_rect(ctx, GRect(0, 0, 144, 168), 0, GCornerNone);
   }
 
@@ -108,6 +108,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_circle(ctx, s_center, s_radius);
 
   // Draw outline
+  graphics_context_set_stroke_color(ctx, GColorYellow);
   graphics_draw_circle(ctx, s_center, s_radius);
 
   // Don't use current time while animating
@@ -209,14 +210,15 @@ static void update_proc(Layer *layer, GContext *ctx) {
   if(!s_animating) {
     static char buffer[] = "00:00";
     
-    graphics_context_set_text_color(ctx, GColorIslamicGreen);
+    //graphics_context_set_text_color(ctx, GColorIslamicGreen);
+    graphics_context_set_text_color(ctx, GColorWhite);
     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
     // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(115, 150,  90, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(102, 140,  89, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 
  
-    strftime(buffer, sizeof("000, 01.01.20"), "%a, %d.%m.%y", tick_time);
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_FONT_FALLBACK), GRect(0, -2,  70, 8), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    strftime(buffer, sizeof("01.01.20"), "%d.%m.%y", tick_time);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(2, -11,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
 
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "finished");
