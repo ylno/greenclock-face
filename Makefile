@@ -13,8 +13,8 @@ cleanbuild:
 
 
 cleanbuildemu:
-	pebble clean; pebble build; pebble install -vv --emulator basalt
+	pebble clean; pebble build; pebble install --emulator basalt
 
 
-emuchalc:
+emuchalk:
 	pebble install --emulator chalk
