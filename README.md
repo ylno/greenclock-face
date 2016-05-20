@@ -12,3 +12,6 @@ There are two inner circles inside the clock face. One is filling up the clock f
 ![](screenshots/screen1.png) ![](screenshots/screen2.png) ![](screenshots/screen3.png)
 
 
+New: Screenshot for Pebble round:
+
+![](screenshots/screen_round.png)

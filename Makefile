@@ -17,4 +17,4 @@ cleanbuildemu:
 
 
 emuchalk:
-	pebble install --emulator chalk
+	pebble clean; pebble build; pebble install --emulator chalk

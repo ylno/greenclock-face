@@ -3,10 +3,11 @@
   "shortName": "greenclock-face",
   "longName": "greenclock-face",
   "companyName": "ylno",
-  "versionCode": 1,
-  "versionLabel": "1.0",
+  "versionCode": 1.2,
+  "versionLabel": "1.2",
   "sdkVersion": "3",
-  "targetPlatforms": ["basalt"],
+  "targetPlatforms": ["basalt", "chalk"],
+  "capabilities": [ "configurable" ],
   "watchapp": {
     "watchface": true
   },

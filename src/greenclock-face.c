@@ -5,16 +5,40 @@
 
 #define HAND_MARGIN  10
 #define HAND_MARGIN_HOUR  25
+
+#if defined(PBL_PLATFORM_BASALT)
 #define FINAL_RADIUS 70
+// XY startpoints where battery is drawn
+#define BAT_START_X  112
+#define BAT_START_Y  2
+#define DATE_X 2
+#define DATE_Y -4
+#define TIME_X 104
+#define TIME_Y 143
+#define SHOW_DATE true
+#define SHOW_TIME true
+#define SHOW_BATTERY true
+
+#elif defined(PBL_PLATFORM_CHALK)
+#define FINAL_RADIUS 88
+// XY startpoints where battery is drawn
+#define BAT_START_X  112
+#define BAT_START_Y  50
+#define DATE_X 30
+#define DATE_Y 40
+#define TIME_X 30
+#define TIME_Y 55
+#define SHOW_DATE false
+#define SHOW_TIME false
+#define SHOW_BATTERY false
+
+#endif
 
 #define TICK_LENGTH  10
 
 #define ANIMATION_DURATION 1000
 #define ANIMATION_DELAY    600
 
-// XY startpoints where battery is drawn
-#define BAT_START_X  112
-#define BAT_START_Y  2
 
 //#define DEBUG true
 
@@ -262,11 +286,11 @@ APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle1 %i", (int)2.1113);
     graphics_context_set_text_color(ctx, GColorBlack);
     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
     // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(102, 140,  89, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 
- 
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(TIME_X, TIME_Y,  89, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+
     strftime(buffer, sizeof("01.01.20"), "%d.%m.%y", tick_time);
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), GRect(2, -11,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(DATE_X, DATE_Y,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
 
   #ifdef DEBUG
@@ -282,6 +306,11 @@ static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
     #ifdef DEBUG
     APP_LOG(APP_LOG_LEVEL_DEBUG, "battery update");
     #endif
+
+    if(!SHOW_BATTERY) {
+      return;
+    }
+
     //---draw 2 rectangles to represent the battery---
 
     //graphics_context_set_stroke_color(ctx, GColorMalachite);
