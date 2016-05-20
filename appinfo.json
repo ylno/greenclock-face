@@ -7,7 +7,7 @@
   "versionLabel": "1.2",
   "sdkVersion": "3",
   "targetPlatforms": ["basalt", "chalk"],
-  "capabilities": [ "configurable" ],
+  "capabilities": [  ],
   "watchapp": {
     "watchface": true
   },
