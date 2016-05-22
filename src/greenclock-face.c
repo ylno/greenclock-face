@@ -59,6 +59,10 @@ static bool s_animating = true;
 static BatteryChargeState batteryState;
 static Layer *mydrawings_layer;
 
+typedef enum {
+  showDate = 0,
+} AppKey;
+
 
 /*************************** AnimationImplementation **************************/
 

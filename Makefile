@@ -18,3 +18,6 @@ cleanbuildemu:
 
 emuchalk:
 	pebble clean; pebble build; pebble install --emulator chalk
+
+kill:
+	pebble kill

@@ -7,12 +7,12 @@
   "versionLabel": "1.2",
   "sdkVersion": "3",
   "targetPlatforms": ["basalt", "chalk"],
-  "capabilities": [  ],
+  "capabilities": [ "configurable" ],
   "watchapp": {
     "watchface": true
   },
   "appKeys": {
-    "dummy": 0
+    "showDate": 0
   },
   "resources": {
     "media": []
