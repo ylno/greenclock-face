@@ -13,7 +13,7 @@ cleanbuild:
 
 
 cleanbuildemu:
-	pebble clean; pebble build; pebble install --emulator basalt
+	pebble clean; pebble build; pebble install --emulator basalt --logs &
 
 
 emuchalk:

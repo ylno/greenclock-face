@@ -12,7 +12,10 @@
     "watchface": true
   },
   "appKeys": {
-    "showDate": 0
+    "minuteCircleColor": 0,
+    "hourCircleColor": 1,
+    "showDate": 2,
+    "showBatteryLoad": 3
   },
   "resources": {
     "media": []

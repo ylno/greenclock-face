@@ -39,8 +39,12 @@
 #define ANIMATION_DURATION 1000
 #define ANIMATION_DELAY    600
 
+#define MINUTE_CIRCLE_COLOR 0
+static GColor minute_circle_color;
+#define HOUR_CIRCLE_COLOR 1
+static GColor hour_circle_color;
 
-//#define DEBUG true
+#define DEBUG true
 
 typedef struct {
   int hours;
@@ -58,10 +62,6 @@ static bool s_animating = true;
 
 static BatteryChargeState batteryState;
 static Layer *mydrawings_layer;
-
-typedef enum {
-  showDate = 0,
-} AppKey;
 
 
 /*************************** AnimationImplementation **************************/
@@ -117,7 +117,7 @@ static void tick_handler(struct tm *tick_time_new, TimeUnits changed) {
   s_last_time.minutes = tick_time_new->tm_min;
 
   #ifdef DEBUG
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "tick_hanlder hours %i minutes %i", s_last_time.hours, s_last_time.minutes);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "tick_handler hours %i minutes %i", s_last_time.hours, s_last_time.minutes);
   #endif
 
 
@@ -182,15 +182,15 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
     if(minute_ring_radius > hour_ring_radius) {
       // minute ring then day ring
-      graphics_context_set_fill_color(ctx, GColorMintGreen);
+      graphics_context_set_fill_color(ctx, minute_circle_color);
       graphics_fill_circle(ctx, s_center, minute_ring_radius);  
-      graphics_context_set_fill_color(ctx, GColorMalachite);
+      graphics_context_set_fill_color(ctx, hour_circle_color);
       graphics_fill_circle(ctx, s_center, hour_ring_radius);
     } else {
       // hour ring, then day ring
-      graphics_context_set_fill_color(ctx, GColorMalachite);
+      graphics_context_set_fill_color(ctx, hour_circle_color);
       graphics_fill_circle(ctx, s_center, hour_ring_radius);
-      graphics_context_set_fill_color(ctx, GColorMintGreen);
+      graphics_context_set_fill_color(ctx, minute_circle_color);
       graphics_fill_circle(ctx, s_center, minute_ring_radius);  
     }
 
@@ -351,6 +351,20 @@ static void window_load(Window *window) {
   #ifdef DEBUG
   APP_LOG(APP_LOG_LEVEL_DEBUG, "window load");
   #endif
+
+  if (persist_read_int(MINUTE_CIRCLE_COLOR)) {
+      int color = persist_read_int(MINUTE_CIRCLE_COLOR);
+      minute_circle_color = GColorFromHEX(color);
+  } else {
+    minute_circle_color = GColorMintGreen;
+  }
+  if (persist_read_int(HOUR_CIRCLE_COLOR)) {
+     int color = persist_read_int(HOUR_CIRCLE_COLOR);
+     hour_circle_color = GColorFromHEX(color);
+  } else {
+    hour_circle_color = GColorMalachite;
+  }
+
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
 
@@ -415,6 +429,44 @@ static void battery_state_handler(BatteryChargeState charge) {
   
 }
 
+
+static void inbox_received_handler(DictionaryIterator *iter, void *context) {
+  Tuple *minute_circle_color_t = dict_find(iter, MINUTE_CIRCLE_COLOR);
+  Tuple *hour_circle_color_t = dict_find(iter, HOUR_CIRCLE_COLOR);
+  //Tuple *twenty_four_hour_format_t = dict_find(iter, KEY_TWENTY_FOUR_HOUR_FORMAT);
+
+  if (minute_circle_color_t) {
+    int minute_circle_color_int = minute_circle_color_t->value->int32;
+    persist_write_int(MINUTE_CIRCLE_COLOR, minute_circle_color_int);
+    minute_circle_color = GColorFromHEX(minute_circle_color_int);
+
+    // zum verwenden speichern
+    //set_background_and_text_color(background_color);
+  }
+
+  if (hour_circle_color_t) {
+      int hour_circle_color_int = hour_circle_color_t->value->int32;
+      persist_write_int(HOUR_CIRCLE_COLOR, hour_circle_color_int);
+      hour_circle_color = GColorFromHEX(hour_circle_color_int);
+      // zum verwenden speichern
+      //set_background_and_text_color(background_color);
+    }
+
+//  if (twenty_four_hour_format_t) {
+//    twenty_four_hour_format = twenty_four_hour_format_t->value->int8;
+//
+//    persist_write_int(KEY_TWENTY_FOUR_HOUR_FORMAT, twenty_four_hour_format);
+//
+//    update_time();
+//  }
+
+  // repaint
+  layer_mark_dirty(s_canvas_layer);
+  layer_mark_dirty(mydrawings_layer);
+
+}
+
+
 static void init() {
   #ifdef DEBUG
   APP_LOG(APP_LOG_LEVEL_DEBUG, "init");
@@ -448,6 +500,9 @@ static void init() {
   animate(2 * ANIMATION_DURATION, ANIMATION_DELAY, &hands_impl, true);
 
   battery_state_service_subscribe(battery_state_handler);
+
+  app_message_register_inbox_received(inbox_received_handler);
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
 }
 
