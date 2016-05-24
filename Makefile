@@ -21,3 +21,8 @@ emuchalk:
 
 kill:
 	pebble kill
+
+conf:
+	pebble emu-app-config
+
+

@@ -16,15 +16,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
 	console.log('Configuration page returned: ' + JSON.stringify(configData));
 
+	var dict = {
+		minuteCircleColor: parseInt(configData.minuteCircleColor, 16),
+		hourCircleColor: parseInt(configData.hourCircleColor, 16),
+		showBatteryLoad: configData.showBatteryLoad ? 1: 0,
+		showDigitalDate: configData.showDigitalDate ? 1: 0,
+		showDigitalTime: configData.showDigitalTime ? 1: 0,
+		showShadow: configData.showShadow ? 1: 0
+	};
+
 	if (configData.minuteCircleColor) {
-		Pebble.sendAppMessage({
-			minuteCircleColor: parseInt(configData.minuteCircleColor, 16),
-			hourCircleColor: parseInt(configData.hourCircleColor, 16),
-			showBatteryLoad: configData.showBatteryLoad
+		Pebble.sendAppMessage(dict, function() {
+			//console.log('Send successful! ' +  JSON.stringify(dict));
 		}, function() {
-			console.log('Send successful!');
-		}, function() {
-			console.log('Send failed!');
+			//console.log('Send failed!');
 		});
 	}
 });

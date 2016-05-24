@@ -43,8 +43,18 @@
 static GColor minute_circle_color;
 #define HOUR_CIRCLE_COLOR 1
 static GColor hour_circle_color;
+#define SHOW_BATTERY_LOAD 2
+bool show_battery_load;
+#define SHOW_DIGITAL_DATE 3
+bool show_digital_time;
+#define SHOW_DIGITAL_TIME 4
+bool show_digital_date;
+#define SHOW_SHADOW 5
+bool show_shadow;
 
-#define DEBUG true
+
+
+//#define DEBUG true
 
 typedef struct {
   int hours;
@@ -157,9 +167,11 @@ static void update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_antialiased(ctx, ANTIALIASING);
 
   // Draw a shadow
-  graphics_context_set_fill_color(ctx, GColorLightGray);
-  GPoint shadow_center = GPoint(s_center.x + 4, s_center.y + 4);
-  graphics_fill_circle(ctx, shadow_center, s_radius);
+  if(show_shadow) {
+    graphics_context_set_fill_color(ctx, GColorLightGray);
+    GPoint shadow_center = GPoint(s_center.x + 4, s_center.y + 4);
+    graphics_fill_circle(ctx, shadow_center, s_radius);
+  }
 
   // White clockface
   graphics_context_set_fill_color(ctx, GColorWhite);
@@ -243,7 +255,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
   #ifdef DEBUG
   APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle %i", (int)hour_angle);
-APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle1 %i", (int)2.1113);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle1 %i", (int)2.1113);
   #endif
   
 
@@ -284,17 +296,23 @@ APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle1 %i", (int)2.1113);
   graphics_context_set_stroke_width(ctx, 1);
   
   if(!s_animating) {
-    static char buffer[] = "00:00";
-    
-    //graphics_context_set_text_color(ctx, GColorIslamicGreen);
-    graphics_context_set_text_color(ctx, GColorBlack);
-    strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
-    // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
+    if(show_digital_time) {
+      static char buffer[] = "00:00";
 
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(TIME_X, TIME_Y,  89, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      //graphics_context_set_text_color(ctx, GColorIslamicGreen);
+      graphics_context_set_text_color(ctx, GColorBlack);
+      strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
+      // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
 
-    strftime(buffer, sizeof("01.01.20"), "%d.%m.%y", tick_time);
-    graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(DATE_X, DATE_Y,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+      graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(TIME_X, TIME_Y,  89, 25), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    }
+
+    if(show_digital_date) {
+      graphics_context_set_text_color(ctx, GColorBlack);
+      static char buffer[] = "01.01.20";
+      strftime(buffer, sizeof("01.01.20"), "%d.%m.%y", tick_time);
+      graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(DATE_X, DATE_Y,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+    }
   }
 
   #ifdef DEBUG
@@ -308,10 +326,10 @@ APP_LOG(APP_LOG_LEVEL_DEBUG, "hour angle1 %i", (int)2.1113);
 static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
 
     #ifdef DEBUG
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "battery update");
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "battery update %d", show_battery_load);
     #endif
 
-    if(!SHOW_BATTERY) {
+    if(!SHOW_BATTERY || !show_battery_load) {
       return;
     }
 
@@ -352,18 +370,43 @@ static void window_load(Window *window) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "window load");
   #endif
 
-  if (persist_read_int(MINUTE_CIRCLE_COLOR)) {
+  if (persist_exists(MINUTE_CIRCLE_COLOR)) {
       int color = persist_read_int(MINUTE_CIRCLE_COLOR);
       minute_circle_color = GColorFromHEX(color);
   } else {
     minute_circle_color = GColorMintGreen;
   }
-  if (persist_read_int(HOUR_CIRCLE_COLOR)) {
+  if (persist_exists(HOUR_CIRCLE_COLOR)) {
      int color = persist_read_int(HOUR_CIRCLE_COLOR);
      hour_circle_color = GColorFromHEX(color);
   } else {
     hour_circle_color = GColorMalachite;
   }
+
+  if (persist_exists(SHOW_BATTERY_LOAD)) {
+     show_battery_load = persist_read_bool(SHOW_BATTERY_LOAD);
+  } else {
+     show_battery_load = true;
+  }
+
+  if (persist_exists(SHOW_DIGITAL_DATE)) {
+     show_digital_date = persist_read_bool(SHOW_DIGITAL_DATE);
+  } else {
+     show_digital_date = true;
+  }
+
+  if (persist_exists(SHOW_DIGITAL_TIME)) {
+     show_digital_time = persist_read_bool(SHOW_DIGITAL_TIME);
+  } else {
+     show_digital_time = true;
+  }
+
+  if (persist_exists(SHOW_SHADOW)) {
+       show_shadow = persist_read_bool(SHOW_SHADOW);
+    } else {
+       show_shadow = true;
+    }
+
 
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
@@ -376,8 +419,7 @@ static void window_load(Window *window) {
 
   batteryState = battery_state_service_peek();
   mydrawings_layer = layer_create(window_bounds);
-    layer_set_update_proc(mydrawings_layer,
-    my_layer_update_proc);
+  layer_set_update_proc(mydrawings_layer, my_layer_update_proc);
   layer_add_child(window_layer, mydrawings_layer);
 }
 
@@ -433,24 +475,56 @@ static void battery_state_handler(BatteryChargeState charge) {
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *minute_circle_color_t = dict_find(iter, MINUTE_CIRCLE_COLOR);
   Tuple *hour_circle_color_t = dict_find(iter, HOUR_CIRCLE_COLOR);
-  //Tuple *twenty_four_hour_format_t = dict_find(iter, KEY_TWENTY_FOUR_HOUR_FORMAT);
+  Tuple *show_battery_load_t = dict_find(iter, SHOW_BATTERY_LOAD);
+  Tuple *show_digital_date_t = dict_find(iter, SHOW_DIGITAL_DATE);
+  Tuple *show_digital_time_t = dict_find(iter, SHOW_DIGITAL_TIME);
+  Tuple *show_shadow_t = dict_find(iter, SHOW_SHADOW);
 
   if (minute_circle_color_t) {
     int minute_circle_color_int = minute_circle_color_t->value->int32;
     persist_write_int(MINUTE_CIRCLE_COLOR, minute_circle_color_int);
     minute_circle_color = GColorFromHEX(minute_circle_color_int);
-
-    // zum verwenden speichern
-    //set_background_and_text_color(background_color);
   }
 
   if (hour_circle_color_t) {
       int hour_circle_color_int = hour_circle_color_t->value->int32;
       persist_write_int(HOUR_CIRCLE_COLOR, hour_circle_color_int);
       hour_circle_color = GColorFromHEX(hour_circle_color_int);
-      // zum verwenden speichern
-      //set_background_and_text_color(background_color);
     }
+
+
+  if (show_battery_load_t && show_battery_load_t->value->int8 > 0) {
+     show_battery_load = true;
+     persist_write_bool(SHOW_BATTERY_LOAD, true);
+   } else {
+    show_battery_load=false;
+     persist_write_bool(SHOW_BATTERY_LOAD, false);
+   }
+
+   if (show_digital_date_t && show_digital_date_t->value->int8 > 0) {
+      show_digital_date = true;
+      persist_write_bool(SHOW_DIGITAL_DATE, true);
+    } else {
+     show_digital_date=false;
+      persist_write_bool(SHOW_DIGITAL_DATE, false);
+    }
+
+    if (show_digital_time_t && show_digital_time_t->value->int8 > 0) {
+      show_digital_time = true;
+      persist_write_bool(SHOW_DIGITAL_TIME, true);
+    } else {
+     show_digital_time=false;
+      persist_write_bool(SHOW_DIGITAL_TIME, false);
+    }
+
+    if (show_shadow_t && show_shadow_t->value->int8 > 0) {
+      show_shadow = true;
+      persist_write_bool(SHOW_SHADOW, true);
+    } else {
+     show_shadow=false;
+      persist_write_bool(SHOW_SHADOW, false);
+    }
+
 
 //  if (twenty_four_hour_format_t) {
 //    twenty_four_hour_format = twenty_four_hour_format_t->value->int8;

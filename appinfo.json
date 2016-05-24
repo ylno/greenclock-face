@@ -3,8 +3,8 @@
   "shortName": "greenclock-face",
   "longName": "greenclock-face",
   "companyName": "ylno",
-  "versionCode": 1.2,
-  "versionLabel": "1.2",
+  "versionCode": 1.3,
+  "versionLabel": "1.3",
   "sdkVersion": "3",
   "targetPlatforms": ["basalt", "chalk"],
   "capabilities": [ "configurable" ],
@@ -14,8 +14,10 @@
   "appKeys": {
     "minuteCircleColor": 0,
     "hourCircleColor": 1,
-    "showDate": 2,
-    "showBatteryLoad": 3
+    "showBatteryLoad": 2,
+    "showDigitalDate": 3,
+    "showDigitalTime": 4,
+    "showShadow": 5
   },
   "resources": {
     "media": []
