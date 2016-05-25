@@ -52,7 +52,29 @@ bool show_digital_date;
 #define SHOW_SHADOW 5
 bool show_shadow;
 
+#define TICK_COLOR 6
+static GColor tick_color;
 
+#define BATTERY_COLOR 7
+static GColor battery_color;
+
+#define TEXT_COLOR 8
+static GColor text_color;
+
+#define BG_COLOR 9
+static GColor bg_color;
+
+#define CLOCKFACE_COLOR 10
+static GColor clockface_color;
+
+#define CLOCKFACE_OUTER_COLOR 11
+static GColor clockfaceouter_color;
+
+#define MINUTEHAND_COLOR 12
+static GColor minutehand_color;
+
+#define HOURHAND_COLOR 13
+static GColor hourhand_color;
 
 //#define DEBUG true
 
@@ -152,7 +174,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
   #endif
   if(COLORS) {
     //graphics_context_set_fill_color(ctx, GColorFromRGB(s_color_channels[0], s_color_channels[1], s_color_channels[2]));
-    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_context_set_fill_color(ctx, bg_color);
     graphics_fill_rect(ctx, GRect(0, 0, 144, 168), 0, GCornerNone);
   }
 
@@ -174,11 +196,11 @@ static void update_proc(Layer *layer, GContext *ctx) {
   }
 
   // White clockface
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_context_set_fill_color(ctx, clockface_color);
   graphics_fill_circle(ctx, s_center, s_radius);
 
   // Draw outline
-  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_stroke_color(ctx, clockfaceouter_color);
   graphics_draw_circle(ctx, s_center, s_radius);
 
   // Don't use current time while animating
@@ -209,7 +231,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
 
     // Draw ticks
-    graphics_context_set_stroke_color(ctx, GColorChromeYellow);
+    graphics_context_set_stroke_color(ctx, tick_color);
     for(int i=0; i<12; i++) {
       
       float tick_angle = TRIG_MAX_ANGLE * i / 12;
@@ -273,7 +295,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
   // Draw hands with positive length only
   if(s_radius > 2 * HAND_MARGIN) {
     graphics_context_set_stroke_width(ctx, 4);
-    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_context_set_stroke_color(ctx, hourhand_color);
     graphics_draw_line(ctx, s_center, hour_hand);
     
     // Fill Hand with inner white
@@ -284,7 +306,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
   if(s_radius > HAND_MARGIN) {
     graphics_context_set_stroke_width(ctx, 3);
-    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_context_set_stroke_color(ctx, minutehand_color);
     graphics_draw_line(ctx, s_center, minute_hand);
 
     // Fill Hand with inner white
@@ -300,7 +322,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
       static char buffer[] = "00:00";
 
       //graphics_context_set_text_color(ctx, GColorIslamicGreen);
-      graphics_context_set_text_color(ctx, GColorBlack);
+      graphics_context_set_text_color(ctx, text_color);
       strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
       // FONT_KEY_FONT_FALLBACK FONT_KEY_BITHAM_30_BLACK     GColorSpringBud
 
@@ -308,7 +330,7 @@ static void update_proc(Layer *layer, GContext *ctx) {
     }
 
     if(show_digital_date) {
-      graphics_context_set_text_color(ctx, GColorBlack);
+      graphics_context_set_text_color(ctx, text_color);
       static char buffer[] = "01.01.20";
       strftime(buffer, sizeof("01.01.20"), "%d.%m.%y", tick_time);
       graphics_draw_text(ctx, buffer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(DATE_X, DATE_Y,  80, 24), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
@@ -337,7 +359,7 @@ static void my_layer_update_proc(Layer *my_layer, GContext* ctx) {
 
     //graphics_context_set_stroke_color(ctx, GColorMalachite);
     graphics_context_set_stroke_color(ctx, GColorBlack);
-    graphics_context_set_fill_color(ctx, GColorMintGreen);
+    graphics_context_set_fill_color(ctx, battery_color);
 
     GRect rect1;
     rect1.origin = GPoint(BAT_START_X, BAT_START_Y);
@@ -381,6 +403,62 @@ static void window_load(Window *window) {
      hour_circle_color = GColorFromHEX(color);
   } else {
     hour_circle_color = GColorMalachite;
+  }
+
+  if (persist_exists(TICK_COLOR)) {
+     int color = persist_read_int(TICK_COLOR);
+     tick_color = GColorFromHEX(color);
+  } else {
+    tick_color = GColorChromeYellow;
+  }
+
+  if (persist_exists(BATTERY_COLOR)) {
+       int color = persist_read_int(BATTERY_COLOR);
+       battery_color = GColorFromHEX(color);
+    } else {
+      battery_color = GColorMintGreen;
+    }
+
+  if (persist_exists(TEXT_COLOR)) {
+     int color = persist_read_int(TEXT_COLOR);
+     text_color = GColorFromHEX(color);
+  } else {
+    text_color = GColorBlack;
+  }
+
+  if (persist_exists(BG_COLOR)) {
+     int color = persist_read_int(BG_COLOR);
+     bg_color = GColorFromHEX(color);
+  } else {
+    bg_color = GColorWhite;
+  }
+
+  if (persist_exists(CLOCKFACE_COLOR)) {
+     int color = persist_read_int(CLOCKFACE_COLOR);
+     clockface_color = GColorFromHEX(color);
+  } else {
+    clockface_color = GColorWhite;
+  }
+
+  if (persist_exists(CLOCKFACE_OUTER_COLOR)) {
+    int color = persist_read_int(CLOCKFACE_OUTER_COLOR);
+    clockfaceouter_color = GColorFromHEX(color);
+  } else {
+    clockfaceouter_color = GColorBlack;
+  }
+
+  if (persist_exists(MINUTEHAND_COLOR)) {
+    int color = persist_read_int(MINUTEHAND_COLOR);
+    minutehand_color = GColorFromHEX(color);
+  } else {
+    minutehand_color = GColorBlack;
+  }
+
+  if (persist_exists(HOURHAND_COLOR)) {
+    int color = persist_read_int(HOURHAND_COLOR);
+    hourhand_color = GColorFromHEX(color);
+  } else {
+    hourhand_color = GColorBlack;
   }
 
   if (persist_exists(SHOW_BATTERY_LOAD)) {
@@ -479,6 +557,8 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *show_digital_date_t = dict_find(iter, SHOW_DIGITAL_DATE);
   Tuple *show_digital_time_t = dict_find(iter, SHOW_DIGITAL_TIME);
   Tuple *show_shadow_t = dict_find(iter, SHOW_SHADOW);
+  Tuple *tick_color_t = dict_find(iter, TICK_COLOR);
+  Tuple *battery_color_t = dict_find(iter, BATTERY_COLOR);
 
   if (minute_circle_color_t) {
     int minute_circle_color_int = minute_circle_color_t->value->int32;
@@ -491,6 +571,60 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
       persist_write_int(HOUR_CIRCLE_COLOR, hour_circle_color_int);
       hour_circle_color = GColorFromHEX(hour_circle_color_int);
     }
+
+  if (battery_color_t) {
+    int color_int = battery_color_t->value->int32;
+    persist_write_int(BATTERY_COLOR, color_int);
+    battery_color = GColorFromHEX(color_int);
+  }
+
+  if (tick_color_t) {
+    int color_int = tick_color_t->value->int32;
+    persist_write_int(TICK_COLOR, color_int);
+    tick_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *text_color_t = dict_find(iter, TEXT_COLOR);
+  if (text_color_t) {
+    int color_int = text_color_t->value->int32;
+    persist_write_int(TEXT_COLOR, color_int);
+    text_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *bgcolor_t = dict_find(iter, BG_COLOR);
+  if (bgcolor_t) {
+    int color_int = bgcolor_t->value->int32;
+    persist_write_int(BG_COLOR, color_int);
+    bg_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *clockface_color_t = dict_find(iter, CLOCKFACE_COLOR);
+  if (clockface_color_t) {
+    int color_int = clockface_color_t->value->int32;
+    persist_write_int(CLOCKFACE_COLOR, color_int);
+    clockface_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *clockfaceouter_color_t = dict_find(iter, CLOCKFACE_OUTER_COLOR);
+  if (clockfaceouter_color_t) {
+    int color_int = clockfaceouter_color_t->value->int32;
+    persist_write_int(CLOCKFACE_OUTER_COLOR, color_int);
+    clockfaceouter_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *minutehand_color_t = dict_find(iter, MINUTEHAND_COLOR);
+  if (minutehand_color_t) {
+    int color_int = minutehand_color_t->value->int32;
+    persist_write_int(MINUTEHAND_COLOR, color_int);
+    minutehand_color = GColorFromHEX(color_int);
+  }
+
+  Tuple *hourhand_color_t = dict_find(iter, HOURHAND_COLOR);
+  if (hourhand_color_t) {
+    int color_int = hourhand_color_t->value->int32;
+    persist_write_int(MINUTEHAND_COLOR, color_int);
+    hourhand_color = GColorFromHEX(color_int);
+  }
 
 
   if (show_battery_load_t && show_battery_load_t->value->int8 > 0) {

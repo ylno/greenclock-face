@@ -17,7 +17,16 @@
     "showBatteryLoad": 2,
     "showDigitalDate": 3,
     "showDigitalTime": 4,
-    "showShadow": 5
+    "showShadow": 5,
+    "tickColor": 6,
+    "batteryColor": 7,
+    "textColor" : 8,
+    "bgColor": 9,
+    "clockfaceColor": 10,
+    "clockfaceouterColor": 11,
+    "minutehandColor": 12,
+    "hourhandColor": 13
+
   },
   "resources": {
     "media": []
